@@ -1,3 +1,8 @@
+2001-01-28 12:36  stevegt
+
+	* ChangeLog, mh.pm, t/base.t, t/fetch.t, t/store.t, t/unseen.t:
+	reworked mh.pm and tests to handle +foldername correctly more docs
+
 2001-01-20 16:58  stevegt
 
 	* ChangeLog, Changes, MANIFEST: CPAN v0.03 release

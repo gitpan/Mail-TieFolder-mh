@@ -23,8 +23,8 @@ print "ok 1\n";
 # of the test code):
 
 my %h;
-my $folder="Mail::TieFolder.tmp$$";
-`inc +$folder -silent -file t/inbox`;
+my $folder="+/tmp/Mail::TieFolder.tmp$$";
+`inc $folder -silent -file t/inbox`;
 
 # TIEHASH
 tie (%h, 'Mail::TieFolder', 'mh', $folder) && print "ok 2\n";
@@ -47,4 +47,4 @@ print "ok 7\n" if keys %h == 2;
 # print join("\n", keys %h);
 # print "\n";
 
-`rmf +$folder`;
+`rmf $folder`;

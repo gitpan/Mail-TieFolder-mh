@@ -19,8 +19,8 @@ print "ok 1\n";
 ######################### End of black magic.
 
 my %h;
-my $folder="Mail::TieFolder.tmp$$";
-`inc +$folder -silent -file t/inbox`;
+my $folder="+/tmp/Mail::TieFolder.tmp$$";
+`inc $folder -silent -file t/inbox`;
 
 # TIEHASH
 tie (%h, 'Mail::TieFolder', 'mh', $folder) && print "ok 2\n";
@@ -63,11 +63,11 @@ print "ok 14\n" if $msg2;
 
 $h{'<200011120345.TAA27386@roton.terraluna.org>'} = $msg2;
 print "ok 15\n" if $h{'<200011120345.TAA27386@roton.terraluna.org>'};
-`rmf +$folder`;
+`rmf $folder`;
 
 # STORE - new folder
 $h{'new'} = $msg1;
 print "ok 16\n" if $h{'<200011112208.OAA20760@roton.terraluna.org>'};
 
-`rmf +$folder`;
+`rmf $folder`;
 

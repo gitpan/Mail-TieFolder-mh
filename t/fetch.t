@@ -23,8 +23,8 @@ print "ok 1\n";
 # of the test code):
 
 my %h;
-my $folder="Mail::TieFolder.tmp$$";
-`inc +$folder -silent -file t/inbox`;
+my $folder="+/tmp/Mail::TieFolder.tmp$$";
+`inc $folder -silent -file t/inbox`;
 
 # TIEHASH
 tie (%h, 'Mail::TieFolder', 'mh', $folder) && print "ok 2\n";
@@ -42,4 +42,4 @@ print "ok 5\n" if $testdate eq 'Sat, 11 Nov 2000 00:51:50 -0800' . "\n";
 
 print "ok 6\n" unless $h{'851.AAA08177@roton.terraluna.org>'};
 
-`rmf +$folder`;
+`rmf $folder`;

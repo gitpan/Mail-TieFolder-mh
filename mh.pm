@@ -7,7 +7,7 @@ use Carp;
 use Mail::Internet;
 use File::Temp qw/ tempfile /;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 NAME
 
@@ -29,6 +29,8 @@ Mail::TieFolder::mh - Tied hash interface for mh mail folders
 Mail::TieFolder::mh implements a tied hash interface to the mh folder
 format.
 
+See L<Mail::TieFolder> for additional info and background.
+
 =cut
 
 sub TIEHASH
@@ -46,12 +48,16 @@ sub TIEHASH
   bless $self, ref($class) ? ref($class) : $class;
   $self->{'unseen'} = 1 unless exists $self->{'unseen'};
 
-  chomp(my $path = `mhparam Path`);
-  die "can't find mh base directory" unless $path;
-  `mkdir -p $ENV{HOME}/$path/$folder`; # make sure folder exists
+  chomp(my $mhpath = `mhparam Path`);
+  die "can't find mh base directory" unless $mhpath;
+
+  # make sure folder exists
+  # my $folderpath=$folder;
+  # $folderpath=$ENV{HOME}/$mhpath/$1 if $folder =~ /^+(.*)/;
+  # `mkdir -p $folderpath`; 
 
   # BUG -- FIRSTKEY/NEXTKEY won't work if you do a packf after TIEHASH
-  open(SCAN, "scan +$folder -width 9999 -format '%(msg) %{message-id}' 2>/dev/null |") || die $!;
+  open(SCAN, "scan $folder -width 9999 -format '%(msg) %{message-id}' 2>/dev/null |") || die $!;
   my ($num, $id);
   while(<SCAN>)
   {
@@ -70,14 +76,14 @@ sub FETCH
   my ($self,$id) = @_;
   chomp($id);
   my $folder = $self->{'folder'};
-  my $cmd = "pick +$folder --message-id '$id' 2> /dev/null ";
+  my $cmd = "pick $folder --message-id '$id' 2> /dev/null ";
   # warn $cmd;
   chomp(my $msgnum = `$cmd`);
   # warn "\n\n$?\n\n";
   # warn "$id $msgnum\n";
   return undef if $? >> 8;
   return undef unless $msgnum;
-  open(MSG, "show -nohead -noshowproc +$folder $msgnum |") || die $!;
+  open(MSG, "show -nohead -noshowproc $folder $msgnum |") || die $!;
   # my $msg = join('',<MSG>);
   my $msg = new Mail::Internet \*MSG;
   return undef unless $msg;
@@ -88,7 +94,7 @@ sub FETCH
   $self->num2id($msgnum,$id);
   if ($self->{'unseen'})
   {
-    `mark +$folder $msgnum -seq unseen`;
+    `mark $folder $msgnum -seq unseen`;
     die "cannot mark unseen: message $msgnum in folder $folder" if $? >> 8;
   }
   return $msg;
@@ -139,7 +145,7 @@ sub STORE
   print $tmpfh $msg->as_string();
   close $tmpfh;
   my $folder = $self->{'folder'};
-  `inc +$folder -silent -file $tmpname`;
+  `inc $folder -silent -file $tmpname`;
   die if $? >> 8;
   unlink($tmpname) || die $!;
   $msg = $self->FETCH($newid);
@@ -147,7 +153,7 @@ sub STORE
   if ($self->{'unseen'})
   {
     my $msgnum = $self->id2num($newid);
-    `mark +$folder $msgnum -seq unseen`;
+    `mark $folder $msgnum -seq unseen`;
     die "cannot mark unseen: message $msgnum in folder $folder" if $? >> 8;
   }
   return $oldmsg if $oldmsg;
@@ -163,7 +169,7 @@ sub DELETE
   return undef unless $msg;
   my $num = $self->id2num($id);
   die unless $num;
-  `rmm +$folder $num`;
+  `rmm $folder $num`;
   die if $? >> 8;
   $self->id2num($id,0);
   $self->num2id($num,"");
@@ -195,13 +201,39 @@ sub id2num
   return $num;
 }
 
+=head1 PREREQUISITES AND NOTES
+
+You will need Mail::TieFolder installed in order for the tests to work.
+
+You should use the Mail::TieFolder parent module to access
+Mail::TieFolder::mh anyway -- see the Mail::TieFolder perldoc.  You
+can get away with using Mail::TieFolder::mh directly for now, but this
+is not guaranteed to work in future versions.  
+
+The MH command-line utilities (scan, rmm, pick, rmf, etc...) must be
+installed and in the user's PATH in order for Mail::TieFolder::mh to
+work.  In this version, I wrapped the mh tools rather than
+re-implement the mh algorithms.  This should not be a major
+restriction in most cases; if anyone is using MH mail folders, then
+the MH tools will virtually always be there.  
+
+If you are looking for a complete re-implementation of the MH folder
+access algorithms in Perl, see Mail::Box::MH -- Mark Overmeer seems to
+have done a pretty thorough job.  I wrote Mail::TieFolder::mh before
+he released Mail::Box::MH, and am considering wrapping his code in a
+future version of Mail::TieFolder::mh in order to remove the need for
+the MH tools.
+
 =head1 AUTHOR
 
 Steve Traugott, stevegt@TerraLuna.Org
 
 =head1 SEE ALSO
 
-perltie(1)
+L<mh>, 
+L<perltie>, 
+L<Mail::TieFolder>,
+L<Mail::Box::MH>
 
 =cut
 
